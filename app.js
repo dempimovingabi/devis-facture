@@ -198,15 +198,19 @@ function clearCanvas(canvasId) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// --- INITIALISATION ---
-window.onload = () => {
+// --- INITIALISATION DES COMPOSANTS ---
+document.addEventListener('DOMContentLoaded', () => {
     renderTable('devis');
     renderTable('facture');
     initSignature('canvas-devis');
     initSignature('canvas-facture');
+});
 
-    // Enregistrement du Service Worker pour la PWA
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').then(() => console.log('SW Registered'));
-    }
-};
+// --- ENREGISTREMENT DU SERVICE WORKER (PWA) ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker enregistré avec succès'))
+            .catch(err => console.error('Erreur lors de l’enregistrement du Service Worker:', err));
+    });
+}
