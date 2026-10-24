@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEMPI MOVING - Devis & Facture</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+</head>
+<body>
+
+    <!-- Navigation (Masqué à l'impression) -->
+    <div class="nav-tabs no-print">
+        <button class="tab-btn active" onclick="switchTab('devis')">Devis</button>
+        <button class="tab-btn" onclick="switchTab('facture')">Facture</button>
+        <button class="tab-btn" onclick="window.print()">🖨️ Imprimer / PDF</button>
+    </div>
+
+    <!-- MODULE DEVIS -->
+    <div id="module-devis" class="document-container active">
+        <!-- ENTETE -->
+        <header class="entete">
+            <div class="logo-box">
+                <input type="file" id="logo-gauche" accept="image/*" class="no-print" onchange="previewImage(this, 'img-gauche')">
+                <img id="img-gauche" src="icons/icon-192x192.png" alt="Logo Gauche">
+            </div>
+            <div class="entete-centre">
+                <h1>Agence de Publicité</h1>
+                <h2>DEMPI MOVING-ABI</h2>
+                <h3>ALL ART</h3>
+                <p>N° Impôt : A1605507E &nbsp;|&nbsp; N° Compte bancaire 'FBNBank' : 3013014185411</p>
+                <p>Tél : +24382 622 2264 - +24397 628 69 29 &nbsp;|&nbsp; Email : dedickmpiana@gmail.com</p>
+                <p><em>Services rendus : Peintures (murale, bâtiment), portrait, sérigraphie (impression T-shirt, banderole, vareuse, cachet...), panneau de visibilité, menuiserie, maçonnerie</em></p>
+            </div>
+            <div class="logo-box">
+                <input type="file" id="logo-droite" accept="image/*" class="no-print" onchange="previewImage(this, 'img-droite')">
+                <img id="img-droite" src="icons/icon-192x192.png" alt="Logo Droite">
+            </div>
+        </header>
+
+        <hr>
+
+        <div class="titre-section">
+            <h3>DEVIS PROFORMA N° <input type="text" value="530" class="input-inline" style="width: 50px;"></h3>
+            <h3>Kananga, le <input type="date" class="input-inline"></h3>
+        </div>
+
+        <div class="travail-section">
+            <p><strong>TRAVAIL A REALISER :</strong> <input type="text" value="RAFRAICHISSEMENT BATIMENTS : MISE DE LA PEINTURE (INTERIEUR) KAMAYI" class="input-full"></p>
+            <p><strong>CLIENT :</strong> <input type="text" value="SOCOC" class="input-inline"></p>
+        </div>
+
+        <!-- Tableau Devis -->
+        <table id="table-devis">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Qté</th>
+                    <th>LIBELLE</th>
+                    <th>P.U/ <select id="devise-devis" onchange="changeDevise('devis')"><option value="$">$</option><option value="FC">FC</option></select></th>
+                    <th>P.T/ <span class="symbole-devise">$</span></th>
+                </tr>
+            </thead>
+            <tbody id="tbody-devis">
+                <!-- Les lignes seront générées par JS -->
+            </tbody>
+        </table>
+        <button class="no-print" onclick="ajouterLigne('devis')">+ Ajouter une ligne</button>
+
+        <div class="totaux-section">
+            <table class="table-totaux">
+                <tr><td>TOTAL</td><td id="dev-total">807</td></tr>
+                <tr><td>MAINS D'ŒUVRE</td><td><input type="number" id="dev-main-oeuvre" value="161.4" oninput="calculerTotaux('devis')"></td></tr>
+                <tr><td>TOTAUX</td><td id="dev-totaux">968.4</td></tr>
+                <tr><td><strong>COUT GLOBAL</strong></td><td><strong id="dev-global">968.4</strong></td></tr>
+            </table>
+        </div>
+
+        <p class="montant-lettres"><em>Nous disons : <span id="dev-lettres">Dollars américains Neuf cent soixante-huit, quatre</span></em></p>
+
+        <div class="signature-section">
+            <p>Fait à <input type="text" value="Kananga" class="input-inline" style="width: 100px;">, le <input type="date" class="input-inline"></p>
+            <p class="nom-signataire">Dedick MPIANA</p>
+            <div class="canvas-container">
+                <canvas id="canvas-devis" class="signature-pad"></canvas>
+                <button class="no-print clear-btn" onclick="clearCanvas('canvas-devis')">Effacer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULE FACTURE -->
+    <div id="module-facture" class="document-container">
+        <!-- ENTETE (Identique, avec des IDs différents) -->
+        <header class="entete">
+            <div class="logo-box">
+                <input type="file" id="logo-gauche-f" accept="image/*" class="no-print" onchange="previewImage(this, 'img-gauche-f')">
+                <img id="img-gauche-f" src="icons/icon-192x192.png" alt="Logo Gauche">
+            </div>
+            <div class="entete-centre">
+                <h1>Agence de Publicité</h1>
+                <h2>DEMPI MOVING</h2>
+                <h3>ALL ART</h3>
+                <p>Tél : +24382 6222264 - +24397 628 69 29 &nbsp;|&nbsp; N° Compte FBNBank : 30130141854-11</p>
+                <p>Email : dedickmpiana@gmail.com</p>
+                <p><em>Services rendus : Peintures (murale, bâtiment), portrait, sérigraphie (impression T-shirt, banderole, vareuse, cachet...), panneau de visibilité, menuiserie, maçonnerie</em></p>
+            </div>
+            <div class="logo-box">
+                <input type="file" id="logo-droite-f" accept="image/*" class="no-print" onchange="previewImage(this, 'img-droite-f')">
+                <img id="img-droite-f" src="icons/icon-192x192.png" alt="Logo Droite">
+            </div>
+        </header>
+
+        <hr>
+        
+        <h2 class="text-center">FACTURE N°<input type="text" value="923" class="input-inline" style="width: 60px;"></h2>
+        
+        <div class="travail-section">
+            <p><strong>Concerne :</strong> <input type="text" value="Ajout d'argent sur les travaux de peinture suite à la hausse des prix sur le marché, au siège FBNBank sarl à Kananga" class="input-full"></p>
+        </div>
+
+        <!-- Tableau Facture -->
+        <table id="table-facture">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Désignation</th>
+                    <th>unité</th>
+                    <th>Qté</th>
+                    <th>Ajout P.U en <select id="devise-facture" onchange="changeDevise('facture')"><option value="$">$</option><option value="FC">FC</option></select></th>
+                    <th>P.T en <span class="symbole-devise">$</span></th>
+                </tr>
+            </thead>
+            <tbody id="tbody-facture">
+                <!-- Les lignes seront générées par JS -->
+            </tbody>
+        </table>
+        <button class="no-print" onclick="ajouterLigne('facture')">+ Ajouter une ligne</button>
+
+        <div class="totaux-section">
+            <table class="table-totaux">
+                <tr><td>Sous-total</td><td id="fact-sous-total">104</td></tr>
+                <tr><td>Main d'œuvre</td><td><input type="number" id="fact-main-oeuvre" value="31" oninput="calculerTotaux('facture')"></td></tr>
+                <tr><td><strong>TOTAL A PAYER</strong></td><td><strong id="fact-global">135</strong></td></tr>
+            </table>
+        </div>
+
+        <p class="montant-lettres"><em>Nous disons : <span id="fact-lettres">Dollars américains Cent trente-cinq</span></em></p>
+
+        <div class="signature-section facture-sign">
+            <p>Fait à <input type="text" value="Kananga" class="input-inline" style="width: 100px;">, le <input type="date" value="2022-10-01" class="input-inline"></p>
+            <p>Pour DEMPI MOVING<br><strong>Dedick MPIANA</strong><br>Artiste décorateur sérigraphe</p>
+            <div class="canvas-container">
+                <canvas id="canvas-facture" class="signature-pad"></canvas>
+                <button class="no-print clear-btn" onclick="clearCanvas('canvas-facture')">Effacer</button>
+                <div class="stamp-placeholder no-print">[Cachet ici]</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
