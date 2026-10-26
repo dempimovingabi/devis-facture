@@ -1,6 +1,7 @@
 {
   "name": "DEMPI MOVING Devis & Facture",
   "short_name": "DEMPI App",
+  "description": "Application de génération de devis et factures pour DEMPI MOVING.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -8,19 +9,19 @@
   "theme_color": "#333333",
   "icons": [
     {
-      "src": "icons/icon-192x192.png",
+      "src": "./icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "./icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "./icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
