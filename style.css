@@ -1,4 +1,3 @@
-/* Variable globale pour l'interligne */
 :root { --global-line-height: 1.3; }
 
 * { box-sizing: border-box; font-family: 'Times New Roman', Times, serif; }
@@ -26,8 +25,7 @@ body { background: #f0f0f0; margin: 0; padding: 20px; padding-top: 60px; }
 /* Document A4 */
 .document-container { 
     display: none; background: #fff; width: 100%; max-width: 21cm; min-height: 29.7cm; margin: 0 auto; padding: 1cm; 
-    box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-    line-height: var(--global-line-height); /* Application de l'interligne */
+    box-shadow: 0 0 10px rgba(0,0,0,0.1); line-height: var(--global-line-height);
 }
 .document-container.active { display: block; }
 
@@ -60,26 +58,33 @@ hr { border: 1px solid #000; margin: 15px 0; }
 .input-full { flex: 1; border: none; border-bottom: 1px dotted #999; font-family: inherit; font-size: inherit; background: transparent; padding: 2px; outline: none; }
 .auto-resize { resize: none; overflow: hidden; min-height: 24px; line-height: inherit; }
 
-/* Tableaux */
-.custom-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-family: var(--table-font, 'Times New Roman'); font-size: var(--table-size, 14px); color: var(--table-color, #000); }
-.custom-table th, .custom-table td { border: 1px solid #000; padding: 6px; text-align: center; vertical-align: middle; }
+/* Conteneur Tableau pour défilement horizontal */
+.table-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; }
 
-.custom-table th:nth-child(1) { width: 5%; }
-.custom-table th:nth-child(2) { width: 10%; }
-.custom-table th:nth-child(3) { width: 45%; }
-.custom-table th:nth-child(4) { width: 15%; }
-.custom-table th:nth-child(5) { width: 15%; }
-.custom-table th:nth-child(6) { width: 10%; }
+/* Tableaux Redimensionnables */
+.custom-table { width: 100%; border-collapse: collapse; font-family: var(--table-font, 'Times New Roman'); font-size: var(--table-size, 14px); color: var(--table-color, #000); table-layout: fixed; }
+.custom-table th, .custom-table td { border: 1px solid #000; padding: 6px; text-align: center; vertical-align: middle; word-wrap: break-word; }
 
-.custom-table th { background: #f9f9f9; }
+.custom-table th { background: #f9f9f9; position: relative; }
 .custom-table tbody tr td:nth-child(3) { text-align: left; }
+
+/* Poignée de redimensionnement */
+.resizer {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 10px;
+    cursor: col-resize;
+    user-select: none;
+    background-color: rgba(0,0,0,0.05); /* Légèrement visible pour l'utilisateur */
+    border-left: 1px solid rgba(0,0,0,0.1);
+}
+.resizer:hover, .resizer:active { background-color: rgba(0,0,255,0.2); }
 
 .input-textarea-cell {
     width: 100%; border: none; background: transparent; resize: none; overflow: hidden;
     font-family: inherit; font-size: inherit; color: inherit; min-height: 24px; padding: 0; margin: 0; line-height: inherit; outline: none;
 }
 
-.custom-table td.selected-cell { outline: 2px solid blue; background-color: rgba(0,0,255,0.1); }
 .btn-add { margin-top: 5px; padding: 5px 10px; cursor: pointer; }
 .btn-del { background: #ff4d4d; color: white; border: none; padding: 4px 8px; cursor: pointer; border-radius: 3px; }
 
@@ -106,4 +111,6 @@ hr { border: 1px solid #000; margin: 15px 0; }
     .signature-pad, .stamp-area { border: none; }
     [contenteditable="true"]:hover, [contenteditable="true"]:focus { background-color: transparent; }
     .input-textarea-cell, .auto-resize { height: auto !important; }
-}
+    .table-wrapper { overflow: visible; }
+    .resizer { display: none; }
+    }
