@@ -1,43 +1,110 @@
-// --- GESTION DES ONGLETS ---
-function switchTab(tab) {
+// --- NAVIGATION ET MENU ---
+function toggleMenu() {
+    document.getElementById('side-menu').classList.toggle('open');
+}
+
+function switchTab(tab, btnElement) {
     document.querySelectorAll('.document-container').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById('module-' + tab).classList.add('active');
-    event.target.classList.add('active');
+    if(btnElement) btnElement.classList.add('active');
+    toggleMenu();
 }
 
-// --- IMPORTATION DES LOGOS ---
+// --- PERSONNALISATION ENTETE ---
+function updateHeaderStyle() {
+    const font = document.getElementById('header-font').value;
+    const size = document.getElementById('header-size').value + 'px';
+    const color = document.getElementById('header-color').value;
+    const isBold = document.getElementById('header-bold').checked;
+    const isItalic = document.getElementById('header-italic').checked;
+    const wordart = document.getElementById('header-wordart').value;
+
+    document.querySelectorAll('.main-title').forEach(el => {
+        el.style.fontFamily = font;
+        el.style.fontSize = size;
+        el.style.color = (wordart === 'none') ? color : '';
+        el.style.fontWeight = isBold ? 'bold' : 'normal';
+        el.style.fontStyle = isItalic ? 'italic' : 'normal';
+        
+        el.className = 'main-title'; 
+        if(wordart !== 'none') el.classList.add(wordart);
+    });
+}
+
+// --- PERSONNALISATION TABLEAU ---
+let isSelectingCells = false;
+
+function updateTableStyle() {
+    const font = document.getElementById('table-font').value;
+    const size = document.getElementById('table-size').value + 'px';
+    const color = document.getElementById('table-color').value;
+
+    document.documentElement.style.setProperty('--table-font', font);
+    document.documentElement.style.setProperty('--table-size', size);
+    document.documentElement.style.setProperty('--table-color', color);
+}
+
+function toggleCellSelection() {
+    isSelectingCells = !isSelectingCells;
+    const btn = document.getElementById('btn-select-cells');
+    btn.style.background = isSelectingCells ? '#4CAF50' : '#555';
+    
+    document.querySelectorAll('.custom-table td').forEach(td => {
+        if(isSelectingCells) {
+            td.addEventListener('click', selectCell);
+        } else {
+            td.removeEventListener('click', selectCell);
+        }
+    });
+}
+
+function selectCell(e) {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return; 
+    e.target.classList.toggle('selected-cell');
+}
+
+function applyCellColor() {
+    const color = document.getElementById('table-cell-color').value;
+    document.querySelectorAll('.custom-table td.selected-cell').forEach(td => {
+        td.style.backgroundColor = color;
+        td.classList.remove('selected-cell'); 
+    });
+}
+
+// --- IMPORTATION D'IMAGES ---
 function previewImage(input, imgId) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
         reader.onload = function (e) {
-            document.getElementById(imgId).src = e.target.result;
+            const img = document.getElementById(imgId);
+            img.src = e.target.result;
+            if(imgId === 'img-sceau') {
+                img.style.display = 'block';
+                document.getElementById('stamp-placeholder').style.display = 'none';
+            }
         };
         reader.readAsDataURL(input.files[0]);
     }
 }
 
-// --- GESTION DES TABLEAUX ---
+// --- GESTION DES DONNEES ---
 let devisData = [
     { qte: 2, lib: "Boites email Gris", pu: 30 },
     { qte: 3, lib: "Boites email blanc", pu: 30 },
-    { qte: 3, lib: "Sceaux latex PDF", pu: 55 },
-    { qte: 5, lib: "Boites email PDF", pu: 30 },
-    { qte: 8, lib: "Litres pétrole", pu: 3 },
-    { qte: 5, lib: "Rouleaux", pu: 3 },
-    { qte: 5, lib: "Roulettes", pu: 2 },
-    { qte: 2, lib: "Sceaux latex blanc", pu: 55 },
-    { qte: 2, lib: "Boites email noir", pu: 30 },
-    { qte: 3, lib: "Boites vernis", pu: 30 },
-    { qte: 5, lib: "Pièces colorants", pu: 3 },
-    { qte: 6, lib: "Brosses", pu: 2 },
-    { qte: 2, lib: "Sceaux vides", pu: 3 }
+    { qte: 3, lib: "Sceaux latex PDF", pu: 55 }
 ];
 
 let factureData = [
     { lib: "Boîte Email blanc pour plinthes", unite: "Pce", qte: 27, pu: 2 },
     { lib: "Tonnelet latex blanc pour murs", unite: "Pce", qte: 5, pu: 10 }
 ];
+
+// Fonction pour ajuster la hauteur du textarea
+function autoResizeTextarea(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+}
 
 function renderTable(type) {
     const tbody = document.getElementById(`tbody-${type}`);
@@ -49,83 +116,106 @@ function renderTable(type) {
         if(type === 'devis') {
             tr.innerHTML = `
                 <td>${index + 1}</td>
-                <td><input type="number" value="${item.qte}" onchange="updateLine('${type}', ${index}, 'qte', this.value)" style="width:50px"></td>
-                <td><input type="text" value="${item.lib}" onchange="updateLine('${type}', ${index}, 'lib', this.value)" style="width:100%; border:none"></td>
-                <td><input type="number" value="${item.pu}" onchange="updateLine('${type}', ${index}, 'pu', this.value)" style="width:60px"></td>
-                <td class="pt-cell">${item.qte * item.pu}</td>
+                <td><input type="number" value="${item.qte}" oninput="updateLine('${type}', ${index}, 'qte', this.value)" style="width:50px; text-align:center;"></td>
+                <td>
+                    <textarea class="input-textarea-cell" oninput="autoResizeTextarea(this); updateLine('${type}', ${index}, 'lib', this.value)">${item.lib}</textarea>
+                </td>
+                <td><input type="number" value="${item.pu}" oninput="updateLine('${type}', ${index}, 'pu', this.value)" style="width:60px; text-align:center;"></td>
+                <td class="pt-cell">${(item.qte * item.pu).toFixed(2)}</td>
+                <td class="no-print"><button class="btn-del" onclick="deleteLine('${type}', ${index})">X</button></td>
             `;
         } else {
             tr.innerHTML = `
                 <td>${index + 1}</td>
-                <td><input type="text" value="${item.lib}" onchange="updateLine('${type}', ${index}, 'lib', this.value)" style="width:100%; border:none"></td>
-                <td><input type="text" value="${item.unite}" onchange="updateLine('${type}', ${index}, 'unite', this.value)" style="width:40px; border:none"></td>
-                <td><input type="number" value="${item.qte}" onchange="updateLine('${type}', ${index}, 'qte', this.value)" style="width:50px"></td>
-                <td><input type="number" value="${item.pu}" onchange="updateLine('${type}', ${index}, 'pu', this.value)" style="width:60px"></td>
-                <td class="pt-cell">${item.qte * item.pu}</td>
+                <td>
+                    <textarea class="input-textarea-cell" oninput="autoResizeTextarea(this); updateLine('${type}', ${index}, 'lib', this.value)">${item.lib}</textarea>
+                </td>
+                <td><input type="text" value="${item.unite}" oninput="updateLine('${type}', ${index}, 'unite', this.value)" style="width:40px; border:none; text-align:center; background:transparent;"></td>
+                <td><input type="number" value="${item.qte}" oninput="updateLine('${type}', ${index}, 'qte', this.value)" style="width:50px; text-align:center;"></td>
+                <td><input type="number" value="${item.pu}" oninput="updateLine('${type}', ${index}, 'pu', this.value)" style="width:60px; text-align:center;"></td>
+                <td class="pt-cell">${(item.qte * item.pu).toFixed(2)}</td>
+                <td class="no-print"><button class="btn-del" onclick="deleteLine('${type}', ${index})">X</button></td>
             `;
         }
         tbody.appendChild(tr);
     });
+    
+    // Ajuster la taille de tous les textareas après le rendu
+    tbody.querySelectorAll('.input-textarea-cell').forEach(autoResizeTextarea);
+
+    if (isSelectingCells) {
+        document.querySelectorAll('.custom-table td').forEach(td => td.addEventListener('click', selectCell));
+    }
     calculerTotaux(type);
 }
 
 function updateLine(type, index, field, value) {
     const data = type === 'devis' ? devisData : factureData;
-    data[index][field] = field === 'qte' || field === 'pu' ? parseFloat(value) : value;
-    renderTable(type);
+    data[index][field] = (field === 'qte' || field === 'pu') ? parseFloat(value) || 0 : value;
+    const row = document.getElementById(`tbody-${type}`).children[index];
+    if (row) {
+        row.querySelector('.pt-cell').innerText = (data[index].qte * data[index].pu).toFixed(2);
+    }
+    calculerTotaux(type);
 }
 
 function ajouterLigne(type) {
     const data = type === 'devis' ? devisData : factureData;
-    if(type === 'devis') data.push({ qte: 1, lib: "", pu: 0 });
-    else data.push({ lib: "", unite: "Pce", qte: 1, pu: 0 });
+    if(type === 'devis') data.push({ qte: 1, lib: "Nouvel article", pu: 0 });
+    else data.push({ lib: "Nouvel article", unite: "Pce", qte: 1, pu: 0 });
     renderTable(type);
 }
 
-// --- CALCULS ET MONNAIE ---
-function calculerTotaux(type) {
-    const data = type === 'devis' ? devisData : factureData;
-    let sousTotal = 0;
-    
-    data.forEach(item => { sousTotal += (item.qte * item.pu); });
-    
-    const mainOeuvre = parseFloat(document.getElementById(`${type === 'devis' ? 'dev' : 'fact'}-main-oeuvre`).value) || 0;
-    const totalGlobal = sousTotal + mainOeuvre;
-
-    if(type === 'devis') {
-        document.getElementById('dev-total').innerText = sousTotal.toFixed(2);
-        document.getElementById('dev-totaux').innerText = totalGlobal.toFixed(2);
-        document.getElementById('dev-global').innerText = totalGlobal.toFixed(2);
-        genererLettres(totalGlobal, 'devis');
-    } else {
-        document.getElementById('fact-sous-total').innerText = sousTotal.toFixed(2);
-        document.getElementById('fact-global').innerText = totalGlobal.toFixed(2);
-        genererLettres(totalGlobal, 'facture');
+function deleteLine(type, index) {
+    if(confirm("Voulez-vous vraiment supprimer cette ligne ?")) {
+        const data = type === 'devis' ? devisData : factureData;
+        data.splice(index, 1);
+        renderTable(type);
     }
 }
 
-// Changement de devise (Met à jour les symboles et le texte)
+// --- CALCULS ---
+function calculerTotaux(type) {
+    const data = type === 'devis' ? devisData : factureData;
+    let sousTotal = 0;
+    data.forEach(item => { sousTotal += (item.qte * item.pu); });
+    
+    const pctInput = document.getElementById(`${type === 'devis' ? 'dev' : 'fact'}-main-oeuvre-pct`);
+    const valInput = document.getElementById(`${type === 'devis' ? 'dev' : 'fact'}-main-oeuvre-val`);
+    
+    const pourcentage = parseFloat(pctInput.value) || 0;
+    const mainOeuvreVal = sousTotal * (pourcentage / 100);
+    valInput.value = mainOeuvreVal.toFixed(2);
+
+    const totalGlobal = sousTotal + mainOeuvreVal;
+
+    if(type === 'devis') {
+        document.getElementById('dev-total').innerText = sousTotal.toFixed(2);
+        document.getElementById('dev-global').innerText = totalGlobal.toFixed(2);
+    } else {
+        document.getElementById('fact-sous-total').innerText = sousTotal.toFixed(2);
+        document.getElementById('fact-global').innerText = totalGlobal.toFixed(2);
+    }
+    genererLettres(totalGlobal, type);
+}
+
 function changeDevise(type) {
     const devise = document.getElementById(`devise-${type}`).value;
-    const symboles = document.querySelectorAll(`#module-${type} .symbole-devise`);
-    symboles.forEach(el => el.innerText = devise);
+    document.querySelectorAll(`#module-${type} .symbole-devise`).forEach(el => el.innerText = devise);
     calculerTotaux(type);
 }
 
-// --- CONVERSION NOMBRE EN LETTRES (FRANÇAIS) ---
+// --- CONVERSION LETTRES ---
 function genererLettres(nombre, type) {
     const deviseSelect = document.getElementById(`devise-${type}`).value;
     const nomDevise = deviseSelect === '$' ? "Dollars américains" : "Francs congolais";
     
-    // Séparation entier / décimal
     let entier = Math.floor(nombre);
     let decimal = Math.round((nombre - entier) * 100);
+    let texteDecimal = decimal > 0 ? `, ${decimal < 10 ? 'zéro ' : ''}${convertirEntier(decimal)}` : "";
     
-    let texte = `${nomDevise} ${convertirEntier(entier)}`;
-    if (decimal > 0) texte += ` virgule ${convertirEntier(decimal)}`;
-    
-    // Majuscule au début
-    texte = texte.charAt(0).toUpperCase() + texte.slice(1);
+    let texte = `${nomDevise} ${convertirEntier(entier)}${texteDecimal}`;
+    texte = texte.charAt(0).toUpperCase() + texte.slice(1).toLowerCase();
     
     document.getElementById(`${type === 'devis' ? 'dev' : 'fact'}-lettres`).innerText = texte;
 }
@@ -140,7 +230,7 @@ function convertirEntier(n) {
         let d = Math.floor(n / 10);
         let u = n % 10;
         if (d === 7 || d === 9) return dizaines[d - 1] + "-" + unites[10 + u];
-        return dizaines[d] + (u === 1 && d !== 8 ? "-et-" : (u > 0 ? "-" : "")) + unites[u];
+        return dizaines[d] + (u === 1 && d !== 8 ? "-et-un" : (u > 0 ? "-" + unites[u] : ""));
     }
     if (n < 1000) {
         let c = Math.floor(n / 100);
@@ -154,19 +244,15 @@ function convertirEntier(n) {
         let mille = m === 1 ? "mille" : convertirEntier(m) + " mille";
         return mille + (r > 0 ? " " + convertirEntier(r) : "");
     }
-    return n.toString(); // Simplifié pour ce cas d'usage
+    return n.toString();
 }
 
 // --- SIGNATURE TACTILE ---
-const canvases = {};
 function initSignature(canvasId) {
     const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let drawing = false;
-
-    // Ajuster la taille du canvas
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
 
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
@@ -174,9 +260,16 @@ function initSignature(canvasId) {
 
     const getPos = (e) => {
         const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return { x: clientX - rect.left, y: clientY - rect.top };
+
+        return { 
+            x: (clientX - rect.left) * scaleX, 
+            y: (clientY - rect.top) * scaleY 
+        };
     };
 
     const start = (e) => { e.preventDefault(); drawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
@@ -187,6 +280,7 @@ function initSignature(canvasId) {
     canvas.addEventListener('mousemove', move);
     canvas.addEventListener('mouseup', end);
     canvas.addEventListener('mouseout', end);
+    
     canvas.addEventListener('touchstart', start, { passive: false });
     canvas.addEventListener('touchmove', move, { passive: false });
     canvas.addEventListener('touchend', end);
@@ -198,19 +292,17 @@ function clearCanvas(canvasId) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// --- INITIALISATION DES COMPOSANTS ---
+// --- INITIALISATION ---
 document.addEventListener('DOMContentLoaded', () => {
     renderTable('devis');
     renderTable('facture');
+    
     initSignature('canvas-devis');
     initSignature('canvas-facture');
-});
 
-// --- ENREGISTREMENT DU SERVICE WORKER (PWA) ---
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker enregistré avec succès'))
-            .catch(err => console.error('Erreur lors de l’enregistrement du Service Worker:', err));
-    });
-}
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/DEVIS-FACTURE-/sw.js').catch(err => console.log('SW Error', err));
+        });
+    }
+});
