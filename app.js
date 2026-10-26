@@ -11,6 +11,15 @@ function switchTab(tab, btnElement) {
     toggleMenu();
 }
 
+// --- MISE EN PAGE GLOBALE (INTERLIGNE) ---
+function updateGlobalStyle() {
+    const lineHeight = document.getElementById('global-line-height').value;
+    document.documentElement.style.setProperty('--global-line-height', lineHeight);
+    
+    // Redimensionner les textareas après le changement d'interligne
+    document.querySelectorAll('.auto-resize, .input-textarea-cell').forEach(autoResizeTextarea);
+}
+
 // --- PERSONNALISATION ENTETE ---
 function updateHeaderStyle() {
     const font = document.getElementById('header-font').value;
@@ -140,7 +149,6 @@ function renderTable(type) {
         tbody.appendChild(tr);
     });
     
-    // Ajuster la taille de tous les textareas après le rendu
     tbody.querySelectorAll('.input-textarea-cell').forEach(autoResizeTextarea);
 
     if (isSelectingCells) {
@@ -266,10 +274,7 @@ function initSignature(canvasId) {
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-        return { 
-            x: (clientX - rect.left) * scaleX, 
-            y: (clientY - rect.top) * scaleY 
-        };
+        return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
     };
 
     const start = (e) => { e.preventDefault(); drawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
@@ -299,6 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     initSignature('canvas-devis');
     initSignature('canvas-facture');
+
+    // Initialiser la taille des champs de texte extensibles au démarrage
+    document.querySelectorAll('.auto-resize, .input-textarea-cell').forEach(autoResizeTextarea);
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
