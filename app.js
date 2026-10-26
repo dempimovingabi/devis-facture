@@ -1,3 +1,106 @@
+// --- GESTION DE LA SAUVEGARDE (LOCAL STORAGE) ---
+function saveState() {
+    // Sauvegarder les tableaux
+    localStorage.setItem('dempi_devisData', JSON.stringify(devisData));
+    localStorage.setItem('dempi_factureData', JSON.stringify(factureData));
+
+    // Sauvegarder tous les champs de saisie et textes modifiables
+    document.querySelectorAll('input, textarea, [contenteditable="true"]').forEach(el => {
+        let key = el.id || el.className || 'input_' + Array.from(document.querySelectorAll('input, textarea, [contenteditable]')).indexOf(el);
+        if (el.hasAttribute('contenteditable')) {
+            localStorage.setItem('dempi_content_' + key, el.innerHTML);
+        } else {
+            localStorage.setItem('dempi_val_' + key, el.value);
+        }
+    });
+}
+
+function loadState() {
+    // Charger les tableaux
+    const savedDevis = localStorage.getItem('dempi_devisData');
+    if (savedDevis) devisData = JSON.parse(savedDevis);
+
+    const savedFacture = localStorage.getItem('dempi_factureData');
+    if (savedFacture) factureData = JSON.parse(savedFacture);
+
+    // Charger les champs de saisie
+    document.querySelectorAll('input, textarea, [contenteditable="true"]').forEach(el => {
+        let key = el.id || el.className || 'input_' + Array.from(document.querySelectorAll('input, textarea, [contenteditable]')).indexOf(el);
+        if (el.hasAttribute('contenteditable')) {
+            const saved = localStorage.getItem('dempi_content_' + key);
+            if (saved) el.innerHTML = saved;
+        } else {
+            const saved = localStorage.getItem('dempi_val_' + key);
+            if (saved !== null) el.value = saved;
+        }
+    });
+
+    // Mettre à jour les vues
+    renderTable('devis');
+    renderTable('facture');
+    
+    // Redimensionner les textareas
+    document.querySelectorAll('.auto-resize, .input-textarea-cell').forEach(autoResizeTextarea);
+}
+
+function clearAllData() {
+    if(confirm("Voulez-vous vraiment effacer TOUTES les données et recommencer à zéro ?")) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+// --- REDIMENSIONNEMENT DES COLONNES (EXCEL-LIKE) ---
+function initColumnResize() {
+    const resizers = document.querySelectorAll('.resizer');
+    
+    resizers.forEach(resizer => {
+        let startX, startWidth, th;
+        
+        const startResize = (e) => {
+            e.preventDefault();
+            th = resizer.parentElement;
+            startX = e.touches ? e.touches[0].pageX : e.pageX;
+            startWidth = th.offsetWidth;
+            
+            document.addEventListener('mousemove', doResize);
+            document.addEventListener('mouseup', stopResize);
+            document.addEventListener('touchmove', doResize, { passive: false });
+            document.addEventListener('touchend', stopResize);
+        };
+
+        const doResize = (e) => {
+            if(!th) return;
+            const x = e.touches ? e.touches[0].pageX : e.pageX;
+            const newWidth = startWidth + (x - startX);
+            
+            if (newWidth > 30) { // Largeur minimum de 30px
+                th.style.width = newWidth + 'px';
+                // On applique aussi la largeur à toutes les cellules de cette colonne
+                const colIndex = Array.from(th.parentElement.children).indexOf(th);
+                const table = th.closest('table');
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    if(row.children[colIndex]) {
+                        row.children[colIndex].style.width = newWidth + 'px';
+                    }
+                });
+            }
+        };
+
+        const stopResize = () => {
+            document.removeEventListener('mousemove', doResize);
+            document.removeEventListener('mouseup', stopResize);
+            document.removeEventListener('touchmove', doResize);
+            document.removeEventListener('touchend', stopResize);
+            saveState(); // Sauvegarder la largeur après redimensionnement
+        };
+
+        resizer.addEventListener('mousedown', startResize);
+        resizer.addEventListener('touchstart', startResize, { passive: false });
+    });
+}
+
 // --- NAVIGATION ET MENU ---
 function toggleMenu() {
     document.getElementById('side-menu').classList.toggle('open');
@@ -11,13 +114,12 @@ function switchTab(tab, btnElement) {
     toggleMenu();
 }
 
-// --- MISE EN PAGE GLOBALE (INTERLIGNE) ---
+// --- MISE EN PAGE GLOBALE ---
 function updateGlobalStyle() {
     const lineHeight = document.getElementById('global-line-height').value;
     document.documentElement.style.setProperty('--global-line-height', lineHeight);
-    
-    // Redimensionner les textareas après le changement d'interligne
     document.querySelectorAll('.auto-resize, .input-textarea-cell').forEach(autoResizeTextarea);
+    saveState();
 }
 
 // --- PERSONNALISATION ENTETE ---
@@ -35,50 +137,10 @@ function updateHeaderStyle() {
         el.style.color = (wordart === 'none') ? color : '';
         el.style.fontWeight = isBold ? 'bold' : 'normal';
         el.style.fontStyle = isItalic ? 'italic' : 'normal';
-        
         el.className = 'main-title'; 
         if(wordart !== 'none') el.classList.add(wordart);
     });
-}
-
-// --- PERSONNALISATION TABLEAU ---
-let isSelectingCells = false;
-
-function updateTableStyle() {
-    const font = document.getElementById('table-font').value;
-    const size = document.getElementById('table-size').value + 'px';
-    const color = document.getElementById('table-color').value;
-
-    document.documentElement.style.setProperty('--table-font', font);
-    document.documentElement.style.setProperty('--table-size', size);
-    document.documentElement.style.setProperty('--table-color', color);
-}
-
-function toggleCellSelection() {
-    isSelectingCells = !isSelectingCells;
-    const btn = document.getElementById('btn-select-cells');
-    btn.style.background = isSelectingCells ? '#4CAF50' : '#555';
-    
-    document.querySelectorAll('.custom-table td').forEach(td => {
-        if(isSelectingCells) {
-            td.addEventListener('click', selectCell);
-        } else {
-            td.removeEventListener('click', selectCell);
-        }
-    });
-}
-
-function selectCell(e) {
-    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return; 
-    e.target.classList.toggle('selected-cell');
-}
-
-function applyCellColor() {
-    const color = document.getElementById('table-cell-color').value;
-    document.querySelectorAll('.custom-table td.selected-cell').forEach(td => {
-        td.style.backgroundColor = color;
-        td.classList.remove('selected-cell'); 
-    });
+    saveState();
 }
 
 // --- IMPORTATION D'IMAGES ---
@@ -92,9 +154,28 @@ function previewImage(input, imgId) {
                 img.style.display = 'block';
                 document.getElementById('stamp-placeholder').style.display = 'none';
             }
+            // Sauvegarder l'image en base64
+            localStorage.setItem('dempi_img_' + imgId, e.target.result);
         };
         reader.readAsDataURL(input.files[0]);
     }
+}
+
+function loadImages() {
+    ['img-gauche', 'img-droite', 'img-gauche-f', 'img-droite-f', 'img-sceau'].forEach(id => {
+        const savedImg = localStorage.getItem('dempi_img_' + id);
+        if (savedImg) {
+            const img = document.getElementById(id);
+            if(img) {
+                img.src = savedImg;
+                if(id === 'img-sceau') {
+                    img.style.display = 'block';
+                    const ph = document.getElementById('stamp-placeholder');
+                    if(ph) ph.style.display = 'none';
+                }
+            }
+        }
+    });
 }
 
 // --- GESTION DES DONNEES ---
@@ -109,7 +190,6 @@ let factureData = [
     { lib: "Tonnelet latex blanc pour murs", unite: "Pce", qte: 5, pu: 10 }
 ];
 
-// Fonction pour ajuster la hauteur du textarea
 function autoResizeTextarea(el) {
     el.style.height = 'auto';
     el.style.height = el.scrollHeight + 'px';
@@ -125,11 +205,11 @@ function renderTable(type) {
         if(type === 'devis') {
             tr.innerHTML = `
                 <td>${index + 1}</td>
-                <td><input type="number" value="${item.qte}" oninput="updateLine('${type}', ${index}, 'qte', this.value)" style="width:50px; text-align:center;"></td>
+                <td><input type="number" value="${item.qte}" oninput="updateLine('${type}', ${index}, 'qte', this.value)" style="width:100%; text-align:center; border:none; background:transparent;"></td>
                 <td>
                     <textarea class="input-textarea-cell" oninput="autoResizeTextarea(this); updateLine('${type}', ${index}, 'lib', this.value)">${item.lib}</textarea>
                 </td>
-                <td><input type="number" value="${item.pu}" oninput="updateLine('${type}', ${index}, 'pu', this.value)" style="width:60px; text-align:center;"></td>
+                <td><input type="number" value="${item.pu}" oninput="updateLine('${type}', ${index}, 'pu', this.value)" style="width:100%; text-align:center; border:none; background:transparent;"></td>
                 <td class="pt-cell">${(item.qte * item.pu).toFixed(2)}</td>
                 <td class="no-print"><button class="btn-del" onclick="deleteLine('${type}', ${index})">X</button></td>
             `;
@@ -139,9 +219,9 @@ function renderTable(type) {
                 <td>
                     <textarea class="input-textarea-cell" oninput="autoResizeTextarea(this); updateLine('${type}', ${index}, 'lib', this.value)">${item.lib}</textarea>
                 </td>
-                <td><input type="text" value="${item.unite}" oninput="updateLine('${type}', ${index}, 'unite', this.value)" style="width:40px; border:none; text-align:center; background:transparent;"></td>
-                <td><input type="number" value="${item.qte}" oninput="updateLine('${type}', ${index}, 'qte', this.value)" style="width:50px; text-align:center;"></td>
-                <td><input type="number" value="${item.pu}" oninput="updateLine('${type}', ${index}, 'pu', this.value)" style="width:60px; text-align:center;"></td>
+                <td><input type="text" value="${item.unite}" oninput="updateLine('${type}', ${index}, 'unite', this.value)" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                <td><input type="number" value="${item.qte}" oninput="updateLine('${type}', ${index}, 'qte', this.value)" style="width:100%; text-align:center; border:none; background:transparent;"></td>
+                <td><input type="number" value="${item.pu}" oninput="updateLine('${type}', ${index}, 'pu', this.value)" style="width:100%; text-align:center; border:none; background:transparent;"></td>
                 <td class="pt-cell">${(item.qte * item.pu).toFixed(2)}</td>
                 <td class="no-print"><button class="btn-del" onclick="deleteLine('${type}', ${index})">X</button></td>
             `;
@@ -150,10 +230,6 @@ function renderTable(type) {
     });
     
     tbody.querySelectorAll('.input-textarea-cell').forEach(autoResizeTextarea);
-
-    if (isSelectingCells) {
-        document.querySelectorAll('.custom-table td').forEach(td => td.addEventListener('click', selectCell));
-    }
     calculerTotaux(type);
 }
 
@@ -165,6 +241,7 @@ function updateLine(type, index, field, value) {
         row.querySelector('.pt-cell').innerText = (data[index].qte * data[index].pu).toFixed(2);
     }
     calculerTotaux(type);
+    saveState(); // Sauvegarde automatique à chaque frappe
 }
 
 function ajouterLigne(type) {
@@ -172,6 +249,7 @@ function ajouterLigne(type) {
     if(type === 'devis') data.push({ qte: 1, lib: "Nouvel article", pu: 0 });
     else data.push({ lib: "Nouvel article", unite: "Pce", qte: 1, pu: 0 });
     renderTable(type);
+    saveState();
 }
 
 function deleteLine(type, index) {
@@ -179,6 +257,7 @@ function deleteLine(type, index) {
         const data = type === 'devis' ? devisData : factureData;
         data.splice(index, 1);
         renderTable(type);
+        saveState();
     }
 }
 
@@ -211,6 +290,7 @@ function changeDevise(type) {
     const devise = document.getElementById(`devise-${type}`).value;
     document.querySelectorAll(`#module-${type} .symbole-devise`).forEach(el => el.innerText = devise);
     calculerTotaux(type);
+    saveState();
 }
 
 // --- CONVERSION LETTRES ---
@@ -270,10 +350,8 @@ function initSignature(canvasId) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
-        
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
         return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
     };
 
@@ -285,7 +363,6 @@ function initSignature(canvasId) {
     canvas.addEventListener('mousemove', move);
     canvas.addEventListener('mouseup', end);
     canvas.addEventListener('mouseout', end);
-    
     canvas.addEventListener('touchstart', start, { passive: false });
     canvas.addEventListener('touchmove', move, { passive: false });
     canvas.addEventListener('touchend', end);
@@ -295,19 +372,30 @@ function clearCanvas(canvasId) {
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Supprimer la sauvegarde de la signature si on efface
+    localStorage.removeItem('dempi_sig_' + canvasId);
 }
 
 // --- INITIALISATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    renderTable('devis');
-    renderTable('facture');
+    // 1. Charger les données sauvegardées
+    loadState();
+    loadImages();
     
+    // 2. Initialiser les signatures
     initSignature('canvas-devis');
     initSignature('canvas-facture');
 
-    // Initialiser la taille des champs de texte extensibles au démarrage
-    document.querySelectorAll('.auto-resize, .input-textarea-cell').forEach(autoResizeTextarea);
+    // 3. Initialiser le redimensionnement des colonnes
+    initColumnResize();
 
+    // 4. Sauvegarder automatiquement quand on tape du texte
+    document.querySelectorAll('input, textarea, [contenteditable="true"]').forEach(el => {
+        el.addEventListener('input', saveState);
+        el.addEventListener('blur', saveState);
+    });
+
+    // 5. Enregistrer le Service Worker pour le mode hors-ligne
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/DEVIS-FACTURE-/sw.js').catch(err => console.log('SW Error', err));
