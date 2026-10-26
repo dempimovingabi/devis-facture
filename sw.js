@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dempi-cache-v8';
+const CACHE_NAME = 'dempi-cache-v9';
 const urlsToCache = [
   './',
   './index.html',
