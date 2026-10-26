@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Enregistrer le Service Worker pour le mode hors-ligne
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/DEVIS-FACTURE-/sw.js').catch(err => console.log('SW Error', err));
+            navigator.serviceWorker.register('./sw.js')
         });
     }
 });
