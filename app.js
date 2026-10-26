@@ -1,10 +1,8 @@
 // --- GESTION DE LA SAUVEGARDE (LOCAL STORAGE) ---
 function saveState() {
-    // Sauvegarder les tableaux
     localStorage.setItem('dempi_devisData', JSON.stringify(devisData));
     localStorage.setItem('dempi_factureData', JSON.stringify(factureData));
 
-    // Sauvegarder tous les champs de saisie et textes modifiables
     document.querySelectorAll('input, textarea, [contenteditable="true"]').forEach(el => {
         let key = el.id || el.className || 'input_' + Array.from(document.querySelectorAll('input, textarea, [contenteditable]')).indexOf(el);
         if (el.hasAttribute('contenteditable')) {
@@ -16,14 +14,12 @@ function saveState() {
 }
 
 function loadState() {
-    // Charger les tableaux
     const savedDevis = localStorage.getItem('dempi_devisData');
     if (savedDevis) devisData = JSON.parse(savedDevis);
 
     const savedFacture = localStorage.getItem('dempi_factureData');
     if (savedFacture) factureData = JSON.parse(savedFacture);
 
-    // Charger les champs de saisie
     document.querySelectorAll('input, textarea, [contenteditable="true"]').forEach(el => {
         let key = el.id || el.className || 'input_' + Array.from(document.querySelectorAll('input, textarea, [contenteditable]')).indexOf(el);
         if (el.hasAttribute('contenteditable')) {
@@ -35,11 +31,24 @@ function loadState() {
         }
     });
 
-    // Mettre à jour les vues
+    // Charger les réglages de style
+    const savedLineHeight = localStorage.getItem('dempi_line_height');
+    if(savedLineHeight) {
+        document.getElementById('global-line-height').value = savedLineHeight;
+        document.documentElement.style.setProperty('--global-line-height', savedLineHeight);
+    }
+    
+    const savedSigColor = localStorage.getItem('dempi_sig_color');
+    if(savedSigColor) document.getElementById('signature-color').value = savedSigColor;
+
+    const savedRowHeight = localStorage.getItem('dempi_row_height');
+    if(savedRowHeight) {
+        document.getElementById('table-row-height').value = savedRowHeight;
+        document.documentElement.style.setProperty('--table-cell-padding', savedRowHeight + 'px');
+    }
+
     renderTable('devis');
     renderTable('facture');
-    
-    // Redimensionner les textareas
     document.querySelectorAll('.auto-resize, .input-textarea-cell').forEach(autoResizeTextarea);
 }
 
@@ -50,10 +59,9 @@ function clearAllData() {
     }
 }
 
-// --- REDIMENSIONNEMENT DES COLONNES (EXCEL-LIKE) ---
+// --- REDIMENSIONNEMENT DES COLONNES ---
 function initColumnResize() {
     const resizers = document.querySelectorAll('.resizer');
-    
     resizers.forEach(resizer => {
         let startX, startWidth, th;
         
@@ -74,16 +82,12 @@ function initColumnResize() {
             const x = e.touches ? e.touches[0].pageX : e.pageX;
             const newWidth = startWidth + (x - startX);
             
-            if (newWidth > 30) { // Largeur minimum de 30px
+            if (newWidth > 30) {
                 th.style.width = newWidth + 'px';
-                // On applique aussi la largeur à toutes les cellules de cette colonne
                 const colIndex = Array.from(th.parentElement.children).indexOf(th);
                 const table = th.closest('table');
-                const rows = table.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    if(row.children[colIndex]) {
-                        row.children[colIndex].style.width = newWidth + 'px';
-                    }
+                table.querySelectorAll('tbody tr').forEach(row => {
+                    if(row.children[colIndex]) row.children[colIndex].style.width = newWidth + 'px';
                 });
             }
         };
@@ -93,7 +97,7 @@ function initColumnResize() {
             document.removeEventListener('mouseup', stopResize);
             document.removeEventListener('touchmove', doResize);
             document.removeEventListener('touchend', stopResize);
-            saveState(); // Sauvegarder la largeur après redimensionnement
+            saveState();
         };
 
         resizer.addEventListener('mousedown', startResize);
@@ -101,11 +105,16 @@ function initColumnResize() {
     });
 }
 
-// --- NAVIGATION ET MENU ---
-function toggleMenu() {
-    document.getElementById('side-menu').classList.toggle('open');
+function resetTableWidths() {
+    if(confirm("Réinitialiser la largeur de toutes les colonnes ?")) {
+        document.querySelectorAll('.custom-table th, .custom-table td').forEach(cell => {
+            cell.style.width = '';
+        });
+    }
 }
 
+// --- NAVIGATION ET MENU ---
+function toggleMenu() { document.getElementById('side-menu').classList.toggle('open'); }
 function switchTab(tab, btnElement) {
     document.querySelectorAll('.document-container').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -118,8 +127,14 @@ function switchTab(tab, btnElement) {
 function updateGlobalStyle() {
     const lineHeight = document.getElementById('global-line-height').value;
     document.documentElement.style.setProperty('--global-line-height', lineHeight);
+    localStorage.setItem('dempi_line_height', lineHeight);
     document.querySelectorAll('.auto-resize, .input-textarea-cell').forEach(autoResizeTextarea);
-    saveState();
+}
+
+function updateSignatureColor() {
+    const color = document.getElementById('signature-color').value;
+    localStorage.setItem('dempi_sig_color', color);
+    // La nouvelle couleur s'appliquera aux prochains traits tracés
 }
 
 // --- PERSONNALISATION ENTETE ---
@@ -143,6 +158,32 @@ function updateHeaderStyle() {
     saveState();
 }
 
+// --- PERSONNALISATION TABLEAU ---
+function updateTableStyle() {
+    const font = document.getElementById('table-font').value;
+    const size = document.getElementById('table-size').value + 'px';
+    const color = document.getElementById('table-color').value;
+    const wordart = document.getElementById('table-wordart').value;
+
+    document.querySelectorAll('.custom-table').forEach(table => {
+        table.style.setProperty('--table-font', font);
+        table.style.setProperty('--table-size', size);
+        table.style.setProperty('--table-color', color);
+        
+        // Gérer les classes WordArt
+        table.className = 'custom-table';
+        if(wordart !== 'none') table.classList.add(wordart);
+    });
+    saveState();
+}
+
+function updateTableDimensions() {
+    const height = document.getElementById('table-row-height').value;
+    document.documentElement.style.setProperty('--table-cell-padding', height + 'px');
+    localStorage.setItem('dempi_row_height', height);
+    document.querySelectorAll('.input-textarea-cell').forEach(autoResizeTextarea);
+}
+
 // --- IMPORTATION D'IMAGES ---
 function previewImage(input, imgId) {
     if (input.files && input.files[0]) {
@@ -154,7 +195,6 @@ function previewImage(input, imgId) {
                 img.style.display = 'block';
                 document.getElementById('stamp-placeholder').style.display = 'none';
             }
-            // Sauvegarder l'image en base64
             localStorage.setItem('dempi_img_' + imgId, e.target.result);
         };
         reader.readAsDataURL(input.files[0]);
@@ -181,13 +221,10 @@ function loadImages() {
 // --- GESTION DES DONNEES ---
 let devisData = [
     { qte: 2, lib: "Boites email Gris", pu: 30 },
-    { qte: 3, lib: "Boites email blanc", pu: 30 },
-    { qte: 3, lib: "Sceaux latex PDF", pu: 55 }
+    { qte: 3, lib: "Boites email blanc", pu: 30 }
 ];
-
 let factureData = [
-    { lib: "Boîte Email blanc pour plinthes", unite: "Pce", qte: 27, pu: 2 },
-    { lib: "Tonnelet latex blanc pour murs", unite: "Pce", qte: 5, pu: 10 }
+    { lib: "Boîte Email blanc pour plinthes", unite: "Pce", qte: 27, pu: 2 }
 ];
 
 function autoResizeTextarea(el) {
@@ -206,9 +243,7 @@ function renderTable(type) {
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td><input type="number" value="${item.qte}" oninput="updateLine('${type}', ${index}, 'qte', this.value)" style="width:100%; text-align:center; border:none; background:transparent;"></td>
-                <td>
-                    <textarea class="input-textarea-cell" oninput="autoResizeTextarea(this); updateLine('${type}', ${index}, 'lib', this.value)">${item.lib}</textarea>
-                </td>
+                <td><textarea class="input-textarea-cell" oninput="autoResizeTextarea(this); updateLine('${type}', ${index}, 'lib', this.value)">${item.lib}</textarea></td>
                 <td><input type="number" value="${item.pu}" oninput="updateLine('${type}', ${index}, 'pu', this.value)" style="width:100%; text-align:center; border:none; background:transparent;"></td>
                 <td class="pt-cell">${(item.qte * item.pu).toFixed(2)}</td>
                 <td class="no-print"><button class="btn-del" onclick="deleteLine('${type}', ${index})">X</button></td>
@@ -216,9 +251,7 @@ function renderTable(type) {
         } else {
             tr.innerHTML = `
                 <td>${index + 1}</td>
-                <td>
-                    <textarea class="input-textarea-cell" oninput="autoResizeTextarea(this); updateLine('${type}', ${index}, 'lib', this.value)">${item.lib}</textarea>
-                </td>
+                <td><textarea class="input-textarea-cell" oninput="autoResizeTextarea(this); updateLine('${type}', ${index}, 'lib', this.value)">${item.lib}</textarea></td>
                 <td><input type="text" value="${item.unite}" oninput="updateLine('${type}', ${index}, 'unite', this.value)" style="width:100%; border:none; text-align:center; background:transparent;"></td>
                 <td><input type="number" value="${item.qte}" oninput="updateLine('${type}', ${index}, 'qte', this.value)" style="width:100%; text-align:center; border:none; background:transparent;"></td>
                 <td><input type="number" value="${item.pu}" oninput="updateLine('${type}', ${index}, 'pu', this.value)" style="width:100%; text-align:center; border:none; background:transparent;"></td>
@@ -228,7 +261,6 @@ function renderTable(type) {
         }
         tbody.appendChild(tr);
     });
-    
     tbody.querySelectorAll('.input-textarea-cell').forEach(autoResizeTextarea);
     calculerTotaux(type);
 }
@@ -237,11 +269,9 @@ function updateLine(type, index, field, value) {
     const data = type === 'devis' ? devisData : factureData;
     data[index][field] = (field === 'qte' || field === 'pu') ? parseFloat(value) || 0 : value;
     const row = document.getElementById(`tbody-${type}`).children[index];
-    if (row) {
-        row.querySelector('.pt-cell').innerText = (data[index].qte * data[index].pu).toFixed(2);
-    }
+    if (row) row.querySelector('.pt-cell').innerText = (data[index].qte * data[index].pu).toFixed(2);
     calculerTotaux(type);
-    saveState(); // Sauvegarde automatique à chaque frappe
+    saveState();
 }
 
 function ajouterLigne(type) {
@@ -342,9 +372,12 @@ function initSignature(canvasId) {
     const ctx = canvas.getContext('2d');
     let drawing = false;
 
+    // Récupérer la couleur choisie
+    const sigColor = document.getElementById('signature-color').value;
+    
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#000';
+    ctx.strokeStyle = sigColor;
 
     const getPos = (e) => {
         const rect = canvas.getBoundingClientRect();
@@ -355,7 +388,15 @@ function initSignature(canvasId) {
         return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
     };
 
-    const start = (e) => { e.preventDefault(); drawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
+    const start = (e) => { 
+        e.preventDefault(); 
+        drawing = true; 
+        // Mettre à jour la couleur à chaque nouveau trait
+        ctx.strokeStyle = document.getElementById('signature-color').value;
+        const pos = getPos(e); 
+        ctx.beginPath(); 
+        ctx.moveTo(pos.x, pos.y); 
+    };
     const move = (e) => { e.preventDefault(); if (!drawing) return; const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
     const end = (e) => { e.preventDefault(); drawing = false; };
 
@@ -372,33 +413,29 @@ function clearCanvas(canvasId) {
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Supprimer la sauvegarde de la signature si on efface
-    localStorage.removeItem('dempi_sig_' + canvasId);
 }
 
 // --- INITIALISATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Charger les données sauvegardées
     loadState();
     loadImages();
     
-    // 2. Initialiser les signatures
     initSignature('canvas-devis');
     initSignature('canvas-facture');
-
-    // 3. Initialiser le redimensionnement des colonnes
     initColumnResize();
 
-    // 4. Sauvegarder automatiquement quand on tape du texte
+    // Appliquer les styles sauvegardés au démarrage
+    updateTableStyle();
+    updateGlobalStyle();
+
     document.querySelectorAll('input, textarea, [contenteditable="true"]').forEach(el => {
         el.addEventListener('input', saveState);
         el.addEventListener('blur', saveState);
     });
 
-    // 5. Enregistrer le Service Worker pour le mode hors-ligne
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
         });
     }
 });
