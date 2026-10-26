@@ -17,6 +17,7 @@
         <button class="tab-btn active" onclick="switchTab('devis', this)">📄 Module Devis</button>
         <button class="tab-btn" onclick="switchTab('facture', this)">🧾 Module Facture</button>
         <button class="btn-action" onclick="window.print()">🖨️ Aperçu / PDF</button>
+        <button class="btn-action" onclick="clearAllData()" style="background:#f44336; margin-top:10px;">🗑️ Effacer toutes les données</button>
         
         <hr>
         <h4>Mise en page Globale</h4>
@@ -56,22 +57,6 @@
                 <option value="wa-shadow">Ombre</option>
             </select>
         </label>
-
-        <hr>
-        <h4>Style du Tableau</h4>
-        <label>Police : 
-            <select id="table-font" onchange="updateTableStyle()">
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Arial">Arial</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Georgia">Georgia</option>
-            </select>
-        </label>
-        <label>Taille texte : <input type="number" id="table-size" value="14" min="8" max="24" oninput="updateTableStyle()"></label>
-        <label>Couleur texte : <input type="color" id="table-color" value="#000000" onchange="updateTableStyle()"></label>
-        <label>Couleur cases : <input type="color" id="table-cell-color" value="#ffffff"></label>
-        <button class="btn-action" onclick="toggleCellSelection()" id="btn-select-cells" style="background:#555;">Sélectionner des cases</button>
-        <button class="btn-action" onclick="applyCellColor()" style="background:#2196F3;">Colorier cases sélectionnées</button>
     </div>
 
     <!-- MODULE DEVIS -->
@@ -82,12 +67,12 @@
                 <img id="img-gauche" src="icon-192x192.png" alt="Logo Gauche">
             </div>
             <div class="entete-centre header-target">
-                <h1 contenteditable="true">Agence de Publicité</h1>
-                <h2 class="main-title" contenteditable="true">DEMPI MOVING-ABI</h2>
-                <h3 contenteditable="true">ALL ART</h3>
-                <p contenteditable="true">N° Impôt : A1605507E &nbsp;|&nbsp; N° Compte bancaire 'FBNBank' : 3013014185411</p>
-                <p contenteditable="true">Tél : +24382 622 2264 - +24397 628 69 29 &nbsp;|&nbsp; Email : dedickmpiana@gmail.com</p>
-                <p contenteditable="true"><em>Services rendus : Peintures (murale, bâtiment), portrait, sérigraphie (impression T-shirt, banderole, vareuse, cachet...), panneau de visibilité, menuiserie, maçonnerie</em></p>
+                <h1 contenteditable="true" id="dev-h1">Agence de Publicité</h1>
+                <h2 class="main-title" contenteditable="true" id="dev-h2">DEMPI MOVING-ABI</h2>
+                <h3 contenteditable="true" id="dev-h3">ALL ART</h3>
+                <p contenteditable="true" id="dev-p1">N° Impôt : A1605507E &nbsp;|&nbsp; N° Compte bancaire 'FBNBank' : 3013014185411</p>
+                <p contenteditable="true" id="dev-p2">Tél : +24382 622 2264 - +24397 628 69 29 &nbsp;|&nbsp; Email : dedickmpiana@gmail.com</p>
+                <p contenteditable="true" id="dev-p3"><em>Services rendus : Peintures (murale, bâtiment), portrait, sérigraphie (impression T-shirt, banderole, vareuse, cachet...), panneau de visibilité, menuiserie, maçonnerie</em></p>
             </div>
             <div class="logo-box">
                 <input type="file" accept="image/*" class="no-print file-input" onchange="previewImage(this, 'img-droite')">
@@ -98,32 +83,34 @@
         <hr>
 
         <div class="titre-section" style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>DEVIS PROFORMA N° <input type="text" value="530" class="input-inline" style="width: 50px;"></h3>
-            <h3>Kananga, le <input type="date" class="input-inline"></h3>
+            <h3>DEVIS PROFORMA N° <input type="text" id="dev-num" value="530" class="input-inline" style="width: 50px;"></h3>
+            <h3>Kananga, le <input type="date" id="dev-date" class="input-inline"></h3>
         </div>
 
         <div class="travail-section" style="margin-top: 15px;">
-            <!-- Modification ici : textarea extensible pour Travail à réaliser -->
             <div style="display: flex; align-items: flex-start; gap: 5px; margin-bottom: 8px;">
                 <strong style="white-space: nowrap;">TRAVAIL A REALISER :</strong> 
-                <textarea class="input-full auto-resize" oninput="autoResizeTextarea(this)">RAFRAICHISSEMENT BATIMENTS : MISE DE LA PEINTURE (INTERIEUR) KAMAYI</textarea>
+                <textarea id="dev-travail" class="input-full auto-resize" oninput="autoResizeTextarea(this)">RAFRAICHISSEMENT BATIMENTS : MISE DE LA PEINTURE (INTERIEUR) KAMAYI</textarea>
             </div>
-            <p><strong>CLIENT :</strong> <input type="text" value="SOCOC" class="input-inline" style="width: 250px;"></p>
+            <p><strong>CLIENT :</strong> <input type="text" id="dev-client" value="SOCOC" class="input-inline" style="width: 250px;"></p>
         </div>
 
-        <table id="table-devis" class="custom-table">
-            <thead>
-                <tr>
-                    <th>N°</th>
-                    <th>Qté</th>
-                    <th>LIBELLE</th>
-                    <th>P.U/ <select id="devise-devis" onchange="changeDevise('devis')"><option value="$">$</option><option value="FC">FC</option></select></th>
-                    <th>P.T/ <span class="symbole-devise">$</span></th>
-                    <th class="no-print">Action</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-devis"></tbody>
-        </table>
+        <!-- Conteneur pour permettre le défilement horizontal -->
+        <div class="table-wrapper">
+            <table id="table-devis" class="custom-table">
+                <thead>
+                    <tr>
+                        <th>N° <div class="resizer"></div></th>
+                        <th>Qté <div class="resizer"></div></th>
+                        <th>LIBELLE <div class="resizer"></div></th>
+                        <th>P.U/ <select id="devise-devis" onchange="changeDevise('devis')"><option value="$">$</option><option value="FC">FC</option></select> <div class="resizer"></div></th>
+                        <th>P.T/ <span class="symbole-devise">$</span> <div class="resizer"></div></th>
+                        <th class="no-print">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-devis"></tbody>
+            </table>
+        </div>
         <button class="no-print btn-add" onclick="ajouterLigne('devis')">+ Ajouter une ligne</button>
 
         <div class="totaux-section">
@@ -140,10 +127,10 @@
         <p class="montant-lettres"><em>Nous disons : <span id="dev-lettres"></span></em></p>
 
         <div class="signature-section" style="text-align: center; margin-top: 40px;">
-            <p style="text-align: right;">Fait à <input type="text" value="Kananga" class="input-inline" style="width: 100px;">, le <input type="date" class="input-inline"></p>
+            <p style="text-align: right;">Fait à <input type="text" id="dev-fait-a" value="Kananga" class="input-inline" style="width: 100px;">, le <input type="date" id="dev-fait-date" class="input-inline"></p>
             <div style="margin-top: 20px;">
                 <p style="font-weight: bold; font-style: italic; font-size: 18px;">
-                    <input type="text" value="Dedick MPIANA" class="input-inline" style="text-align: center; width: 250px; font-weight: bold; font-style: italic; font-size: 18px;">
+                    <input type="text" id="dev-signataire" value="Dedick MPIANA" class="input-inline" style="text-align: center; width: 250px; font-weight: bold; font-style: italic; font-size: 18px;">
                 </p>
                 <div class="canvas-container" style="margin-top: 5px;">
                     <canvas id="canvas-devis" class="signature-pad" width="300" height="120"></canvas>
@@ -161,12 +148,12 @@
                 <img id="img-gauche-f" src="icon-192x192.png" alt="Logo Gauche">
             </div>
             <div class="entete-centre header-target">
-                <h1 contenteditable="true">Agence de Publicité</h1>
-                <h2 class="main-title" contenteditable="true">DEMPI MOVING</h2>
-                <h3 contenteditable="true">ALL ART</h3>
-                <p contenteditable="true">Tél : +24382 6222264 - +24397 628 69 29 &nbsp;|&nbsp; N° Compte FBNBank : 30130141854-11</p>
-                <p contenteditable="true">Email : dedickmpiana@gmail.com</p>
-                <p contenteditable="true"><em>Services rendus : Peintures (murale, bâtiment), portrait, sérigraphie (impression T-shirt, banderole, vareuse, cachet...), panneau de visibilité, menuiserie, maçonnerie</em></p>
+                <h1 contenteditable="true" id="fac-h1">Agence de Publicité</h1>
+                <h2 class="main-title" contenteditable="true" id="fac-h2">DEMPI MOVING</h2>
+                <h3 contenteditable="true" id="fac-h3">ALL ART</h3>
+                <p contenteditable="true" id="fac-p1">Tél : +24382 6222264 - +24397 628 69 29 &nbsp;|&nbsp; N° Compte FBNBank : 30130141854-11</p>
+                <p contenteditable="true" id="fac-p2">Email : dedickmpiana@gmail.com</p>
+                <p contenteditable="true" id="fac-p3"><em>Services rendus : Peintures (murale, bâtiment), portrait, sérigraphie (impression T-shirt, banderole, vareuse, cachet...), panneau de visibilité, menuiserie, maçonnerie</em></p>
             </div>
             <div class="logo-box">
                 <input type="file" accept="image/*" class="no-print file-input" onchange="previewImage(this, 'img-droite-f')">
@@ -177,32 +164,33 @@
         <hr>
         
         <div class="titre-section" style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>FACTURE N°<input type="text" value="923" class="input-inline" style="width: 60px;"></h3>
-            <h3>Kananga, le <input type="date" value="2022-10-01" class="input-inline"></h3>
+            <h3>FACTURE N°<input type="text" id="fac-num" value="923" class="input-inline" style="width: 60px;"></h3>
+            <h3>Kananga, le <input type="date" id="fac-date" value="2022-10-01" class="input-inline"></h3>
         </div>
         
         <div class="travail-section" style="margin-top: 15px;">
-            <!-- Modification ici : textarea extensible pour Concerne -->
             <div style="display: flex; align-items: flex-start; gap: 5px;">
                 <strong style="white-space: nowrap;">Concerne :</strong> 
-                <textarea class="input-full auto-resize" oninput="autoResizeTextarea(this)">Ajout d'argent sur les travaux de peinture suite à la hausse des prix sur le marché, au siège FBNBank sarl à Kananga</textarea>
+                <textarea id="fac-concerne" class="input-full auto-resize" oninput="autoResizeTextarea(this)">Ajout d'argent sur les travaux de peinture suite à la hausse des prix sur le marché, au siège FBNBank sarl à Kananga</textarea>
             </div>
         </div>
 
-        <table id="table-facture" class="custom-table">
-            <thead>
-                <tr>
-                    <th>N°</th>
-                    <th>Désignation</th>
-                    <th>unité</th>
-                    <th>Qté</th>
-                    <th>Ajout P.U en <select id="devise-facture" onchange="changeDevise('facture')"><option value="$">$</option><option value="FC">FC</option></select></th>
-                    <th>P.T en <span class="symbole-devise">$</span></th>
-                    <th class="no-print">Action</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-facture"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table id="table-facture" class="custom-table">
+                <thead>
+                    <tr>
+                        <th>N° <div class="resizer"></div></th>
+                        <th>Désignation <div class="resizer"></div></th>
+                        <th>unité <div class="resizer"></div></th>
+                        <th>Qté <div class="resizer"></div></th>
+                        <th>P.U en <select id="devise-facture" onchange="changeDevise('facture')"><option value="$">$</option><option value="FC">FC</option></select> <div class="resizer"></div></th>
+                        <th>P.T en <span class="symbole-devise">$</span> <div class="resizer"></div></th>
+                        <th class="no-print">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-facture"></tbody>
+            </table>
+        </div>
         <button class="no-print btn-add" onclick="ajouterLigne('facture')">+ Ajouter une ligne</button>
 
         <div class="totaux-section">
@@ -219,11 +207,11 @@
         <p class="montant-lettres"><em>Nous disons : <span id="fact-lettres"></span></em></p>
 
         <div class="signature-section" style="text-align: center; margin-top: 30px;">
-            <p style="text-align: right;">Fait à <input type="text" value="Kananga" class="input-inline" style="width: 100px;">, le <input type="date" value="2022-10-01" class="input-inline"></p>
+            <p style="text-align: right;">Fait à <input type="text" id="fac-fait-a" value="Kananga" class="input-inline" style="width: 100px;">, le <input type="date" id="fac-fait-date" value="2022-10-01" class="input-inline"></p>
             <div style="margin-top: 20px;">
                 <p>Pour DEMPI MOVING</p>
                 <p>
-                    <input type="text" value="Dedick MPIANA" class="input-inline" style="text-align: center; width: 250px; font-weight: bold; font-style: italic; font-size: 18px;">
+                    <input type="text" id="fac-signataire" value="Dedick MPIANA" class="input-inline" style="text-align: center; width: 250px; font-weight: bold; font-style: italic; font-size: 18px;">
                 </p>
                 <p>Artiste décorateur sérigraphe</p>
                 
